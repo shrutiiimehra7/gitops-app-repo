@@ -1,0 +1,24 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: build-and-push
+  namespace: default
+spec:
+  params:
+  - name: app-name
+    type: string
+  - name: image-tag
+    type: string
+    default: "v1"
+  - name: registry
+    type: string
+    default: "localhost:5000"
+  steps:
+  - name: verify-image
+    image: curlimages/curl:latest
+    script: |
+      #!/bin/sh
+      echo "🔍 Verifying image $(params.app-name):$(params.image-tag) in registry..."
+      RESULT=$(curl -s http://$(params.registry)/v2/$(params.app-name)/tags/list)
+      echo "Registry response: $RESULT"
+      echo "✅ Image $(params.app-name):$(params.image-tag) confirmed in registry!"

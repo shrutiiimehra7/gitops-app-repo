@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: angular-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: /home/shruti/gitops-project
+    targetRevision: HEAD
+    path: k8s/angular-app
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true

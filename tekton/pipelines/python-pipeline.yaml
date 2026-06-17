@@ -1,0 +1,56 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: python-pipeline
+  namespace: default
+spec:
+  params:
+    - name: image-tag
+      type: string
+      default: latest
+  workspaces:
+    - name: shared-workspace
+  tasks:
+    # Step 1: Clone source code
+    - name: clone-source
+      taskRef:
+        name: git-clone
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+      params:
+        - name: repo-url
+          value: https://github.com/shrutiiimehra7/gitops-app-repo.git
+        - name: branch
+          value: main
+
+    # Step 2: Build and push Docker image
+    - name: build-push
+      taskRef:
+        name: docker-build-push
+      runAfter: [clone-source]
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+      params:
+        - name: image-name
+          value: python-service
+        - name: image-tag
+          value: $(params.image-tag)
+        - name: context-path
+          value: python-service
+
+    # Step 3: Update manifest repo so ArgoCD deploys new image
+    - name: update-manifest
+      taskRef:
+        name: update-manifest
+      runAfter: [build-push]
+      params:
+        - name: image-name
+          value: python-service
+        - name: image-tag
+          value: $(params.image-tag)
+        - name: service-name
+          value: python-service
+        - name: manifests-repo
+          value: https://github.com/shrutiiimehra7/gitops-manifests-repo.git

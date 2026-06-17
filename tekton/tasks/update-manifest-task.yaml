@@ -1,0 +1,58 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: update-manifest
+  namespace: default
+spec:
+  params:
+    - name: image-name
+      type: string
+    - name: image-tag
+      type: string
+    - name: service-name
+      type: string
+    - name: manifests-repo
+      type: string
+  steps:
+    - name: update-and-push
+      image: alpine/git:latest
+      script: |
+        #!/bin/sh
+        set -e
+
+        TOKEN=$(cat /var/secrets/token)
+        USERNAME=$(cat /var/secrets/username)
+        REPO=$(echo $(params.manifests-repo) | sed 's|https://||')
+
+        echo "Cloning manifests repo..."
+        git clone https://$USERNAME:$TOKEN@$REPO /tmp/manifests
+        cd /tmp/manifests
+
+        git config user.email "tekton@gitops.local"
+        git config user.name "Tekton CI"
+
+        MANIFEST_FILE=$(params.service-name)/deployment.yaml
+        echo "Updating image tag in $MANIFEST_FILE"
+
+        sed -i "s|image:.*$(params.image-name).*|image: 10.101.229.134:80/$(params.image-name):$(params.image-tag)|g" \
+          $MANIFEST_FILE
+
+        echo "Updated manifest:"
+        grep "image:" $MANIFEST_FILE
+
+        git add $MANIFEST_FILE
+        git commit -m "CI: update $(params.service-name) image to $(params.image-tag)"
+        git push origin main
+        echo "Manifest updated and pushed — ArgoCD will now sync"
+      volumeMounts:
+        - name: github-secret
+          mountPath: /var/secrets
+  volumes:
+    - name: github-secret
+      secret:
+        secretName: github-secret
+        items:
+          - key: token
+            path: token
+          - key: username
+            path: username

@@ -1,0 +1,68 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: java-pipeline
+  namespace: default
+spec:
+  params:
+    - name: image-tag
+      type: string
+      default: latest
+  workspaces:
+    - name: shared-workspace
+  tasks:
+    # Step 1: Clone source code
+    - name: clone-source
+      taskRef:
+        name: git-clone
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+      params:
+        - name: repo-url
+          value: https://github.com/shrutiiimehra7/gitops-app-repo.git
+        - name: branch
+          value: main
+
+    # Step 2: Maven build (compiles Java and runs tests)
+    - name: maven-build
+      taskRef:
+        name: maven-build
+      runAfter: [clone-source]
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+      params:
+        - name: context-path
+          value: java-service
+
+    # Step 3: Build and push Docker image
+    - name: build-push
+      taskRef:
+        name: docker-build-push
+      runAfter: [maven-build]
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+      params:
+        - name: image-name
+          value: java-service
+        - name: image-tag
+          value: $(params.image-tag)
+        - name: context-path
+          value: java-service
+
+    # Step 4: Update manifest
+    - name: update-manifest
+      taskRef:
+        name: update-manifest
+      runAfter: [build-push]
+      params:
+        - name: image-name
+          value: java-service
+        - name: image-tag
+          value: $(params.image-tag)
+        - name: service-name
+          value: java-service
+        - name: manifests-repo
+          value: https://github.com/shrutiiimehra7/gitops-manifests-repo.git

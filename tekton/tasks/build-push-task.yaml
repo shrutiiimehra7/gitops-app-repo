@@ -1,0 +1,25 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: docker-build-push
+  namespace: default
+spec:
+  params:
+    - name: image-name
+      type: string
+    - name: image-tag
+      type: string
+    - name: context-path
+      type: string
+      default: "."
+  workspaces:
+    - name: source
+  steps:
+    - name: build-and-push
+      image: gcr.io/kaniko-project/executor:latest
+      args:
+        - --context=$(workspaces.source.path)/$(params.context-path)
+        - --destination=10.101.229.134:80/$(params.image-name):$(params.image-tag)
+        - --insecure
+        - --skip-tls-verify
+        - --insecure-registry=10.101.229.134:80

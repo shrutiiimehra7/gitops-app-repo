@@ -1,0 +1,38 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: git-clone
+  namespace: default
+spec:
+  params:
+    - name: repo-url
+      type: string
+    - name: branch
+      type: string
+      default: main
+  workspaces:
+    - name: source
+  steps:
+    - name: clone
+      image: alpine/git:latest
+      script: |
+        #!/bin/sh
+        set -e
+        echo "Cloning $(params.repo-url) branch $(params.branch)"
+        git clone --branch $(params.branch) --depth 1 \
+          https://$(cat /var/secrets/username):$(cat /var/secrets/token)@$(echo $(params.repo-url) | sed 's|https://||') \
+          $(workspaces.source.path)
+        echo "Clone complete. Files:"
+        ls $(workspaces.source.path)
+      volumeMounts:
+        - name: github-secret
+          mountPath: /var/secrets
+  volumes:
+    - name: github-secret
+      secret:
+        secretName: github-secret
+        items:
+          - key: token
+            path: token
+          - key: username
+            path: username

@@ -1,0 +1,36 @@
+<div class="container">
+  <header>
+    <h1>GitOps Demo — Product Catalogue</h1>
+    <span class="badge">Angular Frontend</span>
+  </header>
+
+  <div class="services-grid">
+    <section class="service-card">
+      <h2>Python Service (Items)</h2>
+      <p class="status" [class.ok]="pythonStatus === 'healthy'" [class.err]="pythonStatus === 'error'">
+        Status: {{ pythonStatus || 'checking...' }}
+      </p>
+      <ul *ngIf="pythonItems.length > 0">
+        <li *ngFor="let item of pythonItems">
+          <strong>{{ item.name }}</strong> — {{ item.status }}
+        </li>
+      </ul>
+      <p *ngIf="pythonError" class="error-msg">{{ pythonError }}</p>
+    </section>
+
+    <section class="service-card">
+      <h2>Java Service (Products)</h2>
+      <p class="status" [class.ok]="javaStatus === 'UP'" [class.err]="javaStatus === 'DOWN'">
+        Status: {{ javaStatus || 'checking...' }}
+      </p>
+      <ul *ngIf="javaProducts.length > 0">
+        <li *ngFor="let p of javaProducts">
+          <strong>{{ p.name }}</strong> — USD {{ p.price }} ({{ p.category }})
+        </li>
+      </ul>
+      <p *ngIf="javaError" class="error-msg">{{ javaError }}</p>
+    </section>
+  </div>
+
+  <footer><small>Deployed via Tekton CI + ArgoCD GitOps on Minikube</small></footer>
+</div>

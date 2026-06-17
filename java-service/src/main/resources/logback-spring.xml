@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <appender name="JSON_STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+      <!-- Add the service name to every log line so you can filter in Loki/Grafana -->
+      <customFields>{"service":"java-service"}</customFields>
+      <includeMdcKeyName>traceId</includeMdcKeyName>
+    </encoder>
+  </appender>
+
+  <root level="INFO">
+    <appender-ref ref="JSON_STDOUT"/>
+  </root>
+</configuration>

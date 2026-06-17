@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: /home/shruti/gitops-project
+    repoURL: http://gitops:gitops123@192.168.49.2:30329/gitops/gitops-project.git
     targetRevision: HEAD
     path: k8s/java-api
   destination:

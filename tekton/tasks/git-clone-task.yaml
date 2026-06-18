@@ -18,6 +18,8 @@ spec:
       script: |
         #!/bin/sh
         set -e
+        git config --global http.version HTTP/1.1
+        git config --global http.postBuffer 524288000
         echo "Cloning $(params.repo-url) branch $(params.branch)"
         git clone --branch $(params.branch) --depth 1 \
           https://$(cat /var/secrets/username):$(cat /var/secrets/token)@$(echo $(params.repo-url) | sed 's|https://||') \

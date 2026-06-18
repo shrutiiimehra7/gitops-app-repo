@@ -1,0 +1,30 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: angular-build
+spec:
+  params:
+    - name: IMAGE
+      description: Docker image name
+    - name: CONTEXT
+      description: Path to angular app
+      default: "angular-frontend"
+  workspaces:
+    - name: source
+  steps:
+    - name: npm-install
+      image: node:18-alpine
+      workingDir: $(workspaces.source.path)/$(params.CONTEXT)
+      command: ["npm", "ci"]
+
+    - name: npm-build
+      image: node:18-alpine
+      workingDir: $(workspaces.source.path)/$(params.CONTEXT)
+      command: ["npm", "run", "build", "--", "--configuration=production"]
+
+    - name: docker-build-push
+      image: gcr.io/kaniko-project/executor:latest
+      args:
+        - --dockerfile=$(workspaces.source.path)/$(params.CONTEXT)/Dockerfile
+        - --context=$(workspaces.source.path)/$(params.CONTEXT)
+        - --destination=$(params.IMAGE)
